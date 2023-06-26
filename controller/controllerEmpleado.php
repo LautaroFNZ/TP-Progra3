@@ -1,10 +1,11 @@
 <?php
 
 require_once "./models/empleado.php";
+require_once "./interfaces/ApiInterface.php";
 
 class ControllerEmpleado extends Empleado
 {
-    public function altaEmpleado($request,$response,$args)
+    public function darDeAlta($request,$response,$args)
     {   
         $parametros = $request->getParsedBody();
 
@@ -19,9 +20,9 @@ class ControllerEmpleado extends Empleado
             {
                 $empleado = new Empleado();
                 $empleado->setter($nombre,$puesto,$usuarios,$password);
-                $empleado->_id = $empleado->alta();
+                $empleado->id = $empleado->alta();
 
-                if($empleado->_id > 0)
+                if($empleado->id > 0)
                 {
                     $payload = json_encode(array('mensaje'=> 'Empleado dado de alta con exito!'));
                 }else{
@@ -40,7 +41,7 @@ class ControllerEmpleado extends Empleado
         }
     }
 
-    public function listarEmpleados($request,$response,$args)
+    public function listarTodos($request,$response,$args)
     {
         try{
             $empleados = Empleado::listar();
@@ -54,6 +55,13 @@ class ControllerEmpleado extends Empleado
         $response->getBody()->write($payload);
         return $response->withHeader('Content-Type','application/json');
     }
+
+    public function leerEmpleadosCSV($request,$response,$args)
+    {
+       
+        
+    }
+   
 }
 
 ?>

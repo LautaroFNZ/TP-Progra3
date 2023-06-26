@@ -2,24 +2,53 @@
 
 require_once "./db/accesoDatos.php";
 require_once "./models/pedido.php";
+require_once './models/mesa.php';
 
 class ControllerPedido extends Pedido
 {
-    public function altaPedido($request, $response, $args)
+    public function darDeAlta($request, $response, $args)
     {
         $parametros = $request->getParsedBody();
 
-        if (isset($parametros['idMesa']))
+        if (isset($parametros['idMesa']) && isset($parametros['nombreProducto']) && isset($parametros['tipoProducto']))
         {
             $idMesa = $parametros['idMesa'];
+            $nombreProducto = $parametros['nombreProducto'];
+            $tipoProducto = $parametros['tipoProducto'];
+            //$usuarioVenta = $parametros['usuarioVenta'];
 
             try
             {
-                $pedido = new Pedido();
-                $pedido->setter($idMesa);
-                $pedido->_id = $pedido->alta();
+                $header = $request->getHeaderLine('Authorization');
 
-                $payload = json_encode(array("mensaje" => $pedido->_id));
+                if ($header != null)
+                {
+                    $token = trim(explode("Bearer", $header)[1]);
+                    $datos = AutentificadorJWT::ObtenerData($token);
+
+                    //$response->getBody()->write($datos['puesto']);
+                    if($datos->id)
+                    {   
+                        if(Mesa::buscarId($idMesa))
+                        {
+                            $pedido = new Pedido();
+                            $pedido->setter($idMesa,$nombreProducto,$tipoProducto,$datos->id);
+                            Mesa::cambiarEstado($idMesa,'cliente esperando pedido');
+
+                            $pedido->id = $pedido->alta();
+
+                            $payload = json_encode(array("Pedido generado!" => $pedido->id));
+
+                        }else $payload = json_encode(array('mensaje'=>'Mesa no encontrada!'));
+
+                        
+
+                    }else{
+                        $payload = 'No encontramos el usuario del pedido';
+                    }
+                }
+
+                
 
             }
             catch (Exception $e)
@@ -32,7 +61,7 @@ class ControllerPedido extends Pedido
         }
     }
 
-    public function listarPedidos($request, $response, $args)
+    public function listarTodos($request, $response, $args)
     {
         try
         {

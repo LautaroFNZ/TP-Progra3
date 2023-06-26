@@ -3,26 +3,30 @@
 require_once "./db/accesoDatos.php";
 require_once "./models/producto.php";
 
-class ControllerProducto extends Producto
+class ControllerProducto extends Producto implements IApiUsable
 {
-    public function altaProducto($request, $response, $args)
+    public function darDeAlta($request, $response, $args)
     {
         $parametros = $request->getParsedBody();
 
-        if (isset($parametros['nombre']) && isset($parametros['tipo']) && isset($parametros['cantidad']) && isset($parametros['precio']))
+        if (isset($parametros['nombre']) && isset($parametros['tipo']) && isset($parametros['precio']))
         {
             $nombre = $parametros['nombre'];
             $tipoProducto = $parametros['tipo'];
-            $cantidad = $parametros['cantidad'];
             $precio = $parametros['precio'];
 
             try
             {
                 $producto = new Producto();
-                $producto->setter($nombre,$tipoProducto,$cantidad,$precio);
-                $producto->_id = $producto->alta();
+                $producto->setter($nombre,$tipoProducto,$precio);
+                $producto->id = $producto->alta();
 
-                $payload = json_encode(array("mensaje" => $producto->_id));
+                if($producto->id>0)
+                {
+                    $payload = json_encode(array('mensaje'=> 'Producto dado de alta con exito!'));
+                }else{
+                    $payload = json_encode(array('mensaje'=> 'Error al dar de alta un producto!'));
+                }
 
             }
             catch (Exception $e)
@@ -35,7 +39,7 @@ class ControllerProducto extends Producto
         }
     }
 
-    public function listarProductos($request, $response, $args)
+    public function listarTodos($request, $response, $args)
     {
         try
         {
