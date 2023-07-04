@@ -17,9 +17,9 @@ class Usuario{
         $instancia = AccesoDatos::instance();
         $command = $instancia->preparer("INSERT INTO info_login (usuario,fechaString,puesto) VALUES (:usuario,:fechaString,:puesto)");
         
-        $command->bindValue(':usuario',$this->usuario,PDO::PARAM_STR);
+        $command->bindValue(':usuario',strtolower($this->usuario),PDO::PARAM_STR);
         $command->bindValue(':fechaString',$this->fechaString,PDO::PARAM_STR);
-        $command->bindValue(':puesto',$this->puesto,PDO::PARAM_STR);
+        $command->bindValue(':puesto',strtolower($this->puesto),PDO::PARAM_STR);
         $command->execute();
 
         return $instancia->lastId();

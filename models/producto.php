@@ -4,13 +4,13 @@ class Producto
 {
     public $id;
     public $nombre;
-    public $tipo;
+    public $sector;
     public $precio;
     
-    public function setter($nombre = null,$tipo = null,$precio = null)
+    public function setter($nombre = null,$sector = null,$precio = null)
     {
         $this->nombre = $nombre;
-        $this->tipo = $tipo;
+        $this->sector = $sector;
         $this->precio = $precio;
 
     }
@@ -18,23 +18,23 @@ class Producto
     public function alta()
     {
         $instancia = AccesoDatos::instance();
-        $command = $instancia->preparer("INSERT INTO producto (nombre,tipo,precio) VALUES (:nombre,:tipo,:precio)");
+        $command = $instancia->preparer("INSERT INTO productos (nombre,sector,precio) VALUES (:nombre,:sector,:precio)");
         
-        $command->bindValue(':nombre',$this->nombre,PDO::PARAM_STR);
-        $command->bindValue(':tipo',$this->tipo,PDO::PARAM_STR);
+        $command->bindValue(':nombre',strtolower($this->nombre),PDO::PARAM_STR);
+        $command->bindValue(':sector',strtolower($this->sector),PDO::PARAM_STR);
         $command->bindValue(':precio',$this->precio,PDO::PARAM_STR);
         $command->execute();
 
         return $instancia->lastId();
     }
 
-    public function productoExiste($nombre,$tipo)
+    public function productoExiste($nombre,$sector)
     {
         $instancia = AccesoDatos::instance();
-        $command = $instancia->preparer("SELECT id FROM producto WHERE nombre = :nombre AND tipo = :tipo");
+        $command = $instancia->preparer("SELECT id FROM productos WHERE nombre = :nombre AND sector = :sector");
         
         $command->bindValue(':nombre',$nombre);
-        $command->bindValue(':tipo',$tipo);
+        $command->bindValue(':sector',$sector);
         $command->execute();
 
         return $command->fetch(PDO::FETCH_ASSOC);
@@ -43,15 +43,37 @@ class Producto
     public function listar()
     {
         $instancia = AccesoDatos::instance();
-        $command = $instancia->preparer("SELECT * FROM producto");
+        $command = $instancia->preparer("SELECT * FROM productos");
         $command->execute();
 
         return $command->fetchAll(PDO::FETCH_CLASS, 'Producto');
     }
 
-    public static function verificarTipo($tipo)
+    public static function verificarsector($sector)
     {
-        return strcasecmp($tipo,"plato principal") == 0 || strcasecmp($tipo,"postre") == 0 || strcasecmp($tipo,"bebida") == 0 || strcasecmp($tipo,"trago") == 0;
+        return strcasecmp($sector,"bartender") == 0 || strcasecmp($sector,"cervecero") == 0 || strcasecmp($sector,"cocinero") == 0;
+    }
+
+    public static function buscarPorId($id)
+    {
+        $instancia = AccesoDatos::instance();
+        $command = $instancia->preparer("SELECT * FROM productos WHERE id = :id");
+
+        $command->bindValue(':id',$id);
+        $command->execute();
+
+        return $command->fetchObject('Producto');
+    }
+
+    public static function traerSector($id)
+    {
+        $instancia = AccesoDatos::instance();
+        $command = $instancia->preparer("SELECT productos.sector FROM productos WHERE id = :id");
+
+        $command->bindValue(':id',$id);
+        $command->execute();
+
+        return $command->fetchColumn();
     }
 
 }

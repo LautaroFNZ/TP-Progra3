@@ -72,6 +72,17 @@ class ControllerMesa extends Mesa
         $response->getBody()->write($payload);
         return $response->withHeader('Content-Type', 'application/json');
     }
+
+    public function mesaEstaDisponible($request, $response, $args)
+    {
+        $id = $args['id'];
+
+        $payload = json_encode(Mesa::mesaDisponible($id));
+
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
 }
 
 ?>

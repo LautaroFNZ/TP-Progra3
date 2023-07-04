@@ -25,10 +25,10 @@ class Empleado
         $instancia = AccesoDatos::instance();
         $command = $instancia->preparer("INSERT INTO empleados (nombre,puesto,usuario,password) VALUES (:nombre,:puesto,:usuario,:password)");
         
-        $command->bindValue(':nombre',$this->nombre,PDO::PARAM_STR);
-        $command->bindValue(':puesto',$this->puesto,PDO::PARAM_STR);
-        $command->bindValue(':usuario',$this->usuario,PDO::PARAM_STR);
-        $command->bindValue(':password',$this->password,PDO::PARAM_STR);
+        $command->bindValue(':nombre',strtolower($this->nombre),PDO::PARAM_STR);
+        $command->bindValue(':puesto',strtolower($this->puesto),PDO::PARAM_STR);
+        $command->bindValue(':usuario',strtolower($this->usuario),PDO::PARAM_STR);
+        $command->bindValue(':password',strtolower($this->password),PDO::PARAM_STR);
         $command->execute();
 
         return $instancia->lastId();

@@ -3,6 +3,8 @@
 require_once "./models/empleado.php";
 require_once "./models/usuario.php";
 require_once "./interfaces/ApiInterface.php";
+require_once "./utilidades/archivos.php";
+
 
 class ControllerUsuario extends Usuario
 {
@@ -46,6 +48,38 @@ class ControllerUsuario extends Usuario
     {
         $usuarios = Usuario::listar();
         $payload = json_encode(array('Registro de Login Usuarios'=> $usuarios));
+
+        $response->getBody()->write($payload);
+
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
+    public function leerUsuariosCsv($request,$response,$args)
+    {
+        $archivo = new Archivos();
+        $retorno =json_decode($archivo->leerUsuariosCSV("usuarios.csv"));
+        
+        if($retorno->status)
+        {
+            $payload = json_encode(array('mensaje'=>$retorno->mensaje));
+
+        }else $payload = json_encode(array('mensaje'=>$retorno->mensaje));
+
+        $response->getBody()->write($payload);
+
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
+
+    public function guardarEnCsv($request,$response,$args)
+    {
+        $archivo = new Archivos();
+
+        if($archivo->guardarUsuariosCSV("usuarios.csv"))
+        {
+            $payload = json_encode(array('mensaje'=>'Empleados guardados con exito como "usuarios.csv"'));
+
+        }else $payload = json_encode(array('mensaje'=>'Error al guardar los empleados'));
 
         $response->getBody()->write($payload);
 

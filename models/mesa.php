@@ -15,7 +15,7 @@ class Mesa
         $instancia = AccesoDatos::instance();
         $command = $instancia->preparer("INSERT INTO mesa (status) VALUES (:status)");
         
-        $command->bindValue(':status',$this->status,PDO::PARAM_STR);
+        $command->bindValue(':status',strtolower($this->status),PDO::PARAM_STR);
         $command->execute();
 
         return $instancia->lastId();
@@ -40,6 +40,20 @@ class Mesa
         return $command->fetchObject('Mesa');
     }
 
+    public static function mesaDisponible($id)
+    {
+        $instancia = AccesoDatos::instance();
+        $command = $instancia->preparer("SELECT mesa.status FROM mesa WHERE id=:id");
+        $command->bindValue(':id',$id);
+        $command->execute();
+
+        if($command->fetchColumn() == 'cerrada')
+        {
+            return true;
+            
+        }else return false;
+    }
+
     public static function cambiarEstado($id,$estado)
     {
         $instancia = AccesoDatos::instance();
@@ -50,6 +64,7 @@ class Mesa
 
         return $filasAfectadas > 0;
     } 
+    
 
     public static function validarEstado($estado)
     {   

@@ -16,14 +16,15 @@ require_once './controller/controllerMesa.php';
 require_once './controller/controllerPedido.php';
 require_once './controller/controllerProducto.php';
 require_once './controller/controllerUsuario.php';
+require_once './controller/controllerPendientes.php';
 
 //require mw
 require_once './MW/MWVerificarUsuarioEmpleado.php';
 require_once './MW/MWVerificarPuestoEmpleado.php';
 require_once './MW/MWLogin.php';
 require_once './MW/MWVerificarTokenValido.php';
-require_once './MW/MWVerificarProductoExistente.php';
-require_once './MW/MWVerificarTipoProducto.php';
+
+
 require_once './MW/MWVerificarSocio.php';
 
 
@@ -51,6 +52,8 @@ $app->post('/login', \ControllerUsuario::class .':login')->add(new MWLogin());
 
 $app->group('/usuarios', function (RouteCollectorProxy $group){
     $group->get('[/]', \ControllerUsuario::class . ':listarFechaLogin');
+    $group->get('/guardarUsuarios', \ControllerUsuario::class . ':guardarEnCsv');
+    $group->get('/leerUsuarios', \ControllerUsuario::class . ':leerUsuariosCsv');
 })->add(new MWVerificarSocio());
 
     
@@ -69,20 +72,37 @@ $app->group('/mesa', function (RouteCollectorProxy $group){
     $group->post('/darDeAlta', \ControllerMesa::class . ':darDeAlta');
     $group->post('/modificarEstado', \ControllerMesa::class . ':modificarEstado');
     $group->get('[/]', \ControllerMesa::class . ':listarTodos');  
-    $group->post('/cerrar', \ControllerMesa::class . ':statusCerrado')->add(new MWVerificarSocio());  
+    $group->post('/cerrar', \ControllerMesa::class . ':statusCerrado')->add(new MWVerificarSocio());
+    $group->get('/test/{id}', \ControllerMesa::class . ':mesaEstaDisponible');  
 })->add(new MWVerificarTokenValido());
 
 //Manejo de Pedidos
 $app->group('/pedido', function (RouteCollectorProxy $group){
     $group->post('/darDeAlta', \ControllerPedido::class . ':darDeAlta');
-    $group->get('[/]', \ControllerPedido::class . ':listarTodos');  
+    $group->post('/entregarPedido', \ControllerPedido::class . ':entregarPedido');
+    $group->get('/listarPedidos', \ControllerPedido::class . ':listarPedidos');
+})->add(new MWVerificarTokenValido());;
+
+$app->group('/cliente',function (RouteCollectorProxy $group)
+{
+    $group->post('/estadoPedido', \ControllerPedido::class . ':clienteVerificaEstado');
+});
+
+$app->group('/pendientes', function (RouteCollectorProxy $group){
+    $group->get('[/]', \ControllerPendientes::class . ':listarTodos');
+    $group->get('/sector', \ControllerPendientes::class . ':listarPendientesPorSector');
+    $group->get('/establecerListo/{id}',\ControllerPendientes::class . ':establecerPendienteListo');
 })->add(new MWVerificarTokenValido());;
 
 //Manejo de Productos
 $app->group('/producto', function (RouteCollectorProxy $group){
-    $group->post('/darDeAlta', \ControllerProducto::class . ':darDeAlta')->add(new MWVerificarProductoExistente(false))->add(new MWVerificarTipoProducto);
+    $group->post('/darDeAlta', \ControllerProducto::class . ':darDeAlta');
     $group->get('[/]', \ControllerProducto::class . ':listarTodos');
 })->add(new MWVerificarTokenValido());;
+
+
+
+
 
 //Default
 $app->post('[/]', function (Request $request, Response $response) {    

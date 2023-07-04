@@ -4,64 +4,61 @@ require_once "./models/empleado.php";
 
 class Archivos
 {
-    public function guardarArchivo($carpetaDestino,$nombreArchivo)
+    public function leerUsuariosCSV($path)
     {
-        if (isset($_FILES['archivo']) && $_FILES['archivo']['error'] === UPLOAD_ERR_OK) {
+        $retorno = json_encode(array('mensaje'=>'Error al leer los usuarios','status'=> false));
 
-            $rutaArchivoTemporal = $_FILES['archivo']['tmp_name'];
-
-            if (!is_dir($carpetaDestino)) {
-                mkdir($carpetaDestino, 0777, true);
-            }
-
-            $rutaDestino = $carpetaDestino . $nombreArchivo;
-            echo "Archivo guardado exitosamente en la carpeta BackUpUsuarios.";
-            return move_uploaded_file($rutaArchivoTemporal, $rutaDestino);
-
-        } else {
-            echo "No se ha proporcionado un archivo válido.";
-        }
-    }
-
-    public function leerUsuariosCSV($rutaArchivo)
-    {
-        $confirmacion = false;
-
-        if (($handle = fopen($rutaArchivo, "r")) !== false) 
+        if($ar =fopen($path,'r'))
         {
-            while (($data = fgetcsv($handle, 1000, ",")) !== false) 
-            {
-                $empleado = new Empleado();
-
+            while(($empleado = fgetcsv($ar)) !== false)
+            {   
                 
-                $id = $data[0];
-                $nombre = $data[1];
-                $puesto = $data[2];
-                $usuario = $data[3];
-                $password = $data[4];
-                
-                $empleado->setter($nombre,$puesto,$usuario,$password);
-                $empleado->id = $id;
-
-                if(!Empleado::verificarUsuario($usuario))
+                $empleadoCsv = new Empleado();
+                if($empleado[1]!= 'NOMBRE' && $empleado[2]!='PUESTO' && $empleado[3]!='USUARIO' && $empleado[4]!='PASSWORD')
                 {
-                    $empleado->alta();
-                    $confirmacion = true;
-                }
-                
+                    if(!Empleado::verificarUsuario($empleado[3]))
+                    {
+                        $empleadoCsv->setter($empleado[1],$empleado[2],$empleado[3],$empleado[4]);
+                    
+                        $empleadoCsv->alta();
+                        $retorno = json_encode(array('mensaje'=>'Empleados guardados con exito!','status'=> true));
+                    }else $retorno = json_encode(array('mensaje'=>'Empleados existente en la base de datos! No se guardará','status'=> false));
+
+                }                                    
 
             }
 
-            fclose($handle);
+            fclose($ar);           
         }
 
-        if($confirmacion)
-        {
-            return "Se han dado de alta los usuario no existentes en la base de datos!";
-            
-        }else return "No hemos dado de alta usuarios nuevos";
-
+        return $retorno;
     }
+
+    public function guardarUsuariosCSV($path)
+    {
+        $retorno = false;
+
+        if($ar = fopen($path,"w"))
+        {
+            $empleados = Empleado::listar();
+
+            if(!empty($empleados))
+            {
+                $encabezado = "ID,NOMBRE,PUESTO,USUARIO,PASSWORD\n";
+                fwrite($ar,$encabezado);
+                foreach($empleados as $empleado)
+                {
+                    $linea = $empleado->id . "," . $empleado->nombre . "," . $empleado->puesto . ",". $empleado->usuario . ","  . $empleado->password . "\n";
+                    fwrite($ar,$linea);
+                }
+
+                $retorno = true;
+            }   
+        }   
+
+        return $retorno;
+    }
+
 }
 
 ?>

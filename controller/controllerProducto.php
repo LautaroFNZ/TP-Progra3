@@ -9,16 +9,16 @@ class ControllerProducto extends Producto implements IApiUsable
     {
         $parametros = $request->getParsedBody();
 
-        if (isset($parametros['nombre']) && isset($parametros['tipo']) && isset($parametros['precio']))
+        if (isset($parametros['nombre']) && isset($parametros['sector']) && isset($parametros['precio']))
         {
             $nombre = $parametros['nombre'];
-            $tipoProducto = $parametros['tipo'];
+            $sectorProducto = $parametros['sector'];
             $precio = $parametros['precio'];
 
             try
             {
                 $producto = new Producto();
-                $producto->setter($nombre,$tipoProducto,$precio);
+                $producto->setter($nombre,$sectorProducto,$precio);
                 $producto->id = $producto->alta();
 
                 if($producto->id>0)
@@ -34,9 +34,11 @@ class ControllerProducto extends Producto implements IApiUsable
                 $payload = json_encode(array("mensaje" => $e->getMessage()));
             }
 
-            $response->getBody()->write($payload);
-            return $response->withHeader('Content-Type', 'application/json');
-        }
+        }else $payload = json_encode(array("mensaje" => 'Verifique los parametros'));
+
+
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json');
     }
 
     public function listarTodos($request, $response, $args)

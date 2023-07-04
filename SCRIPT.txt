@@ -1,0 +1,43 @@
+CREATE TABLE empleados (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  puesto VARCHAR(100) NOT NULL,
+  usuario VARCHAR(100) NOT NULL,
+  password VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE pedidos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  idMesa INT NOT NULL,
+  idProductos VARCHAR(200) NOT NULL,
+  estadoPedido varchar(50) NOT NULL,
+  precioTotal INT NOT NULL,
+  usuarioVenta varchar(100) NOT NULL,
+  fechaEntrega varchar(100) NOT NULL,
+  fechaEstimada varchar(100) NOT NULL
+);
+
+CREATE TABLE mesa (id INT AUTO_INCREMENT PRIMARY KEY,status varchar(50) not null);
+
+
+CREATE TABLE productos{
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nombre varchar(100) NOT NULL,
+  sector varchar(50) NOT NULL,
+  precio INT NOT NULL
+}
+
+CREATE TABLE pendientes(
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  idProducto INT NOT NULL,
+  nroPedido INT NOT NULL,
+  sector varchar(100) NOT NULL,
+  estado varchar(50) NOT NULL,
+  fechaEntregaPedido varchar(100) NOT NULL,
+  fechaEntregaReal varchar(100) NOT NULL  
+)
+
+
+
+
+
+create table info_login (usuario varchar(50) not null, fechaString varchar(50) not null, puesto varchar(50) not null);
