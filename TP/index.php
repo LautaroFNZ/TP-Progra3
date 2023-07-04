@@ -11,25 +11,26 @@ use Slim\Routing\RouteCollectorProxy;
 require __DIR__ . '/vendor/autoload.php';
 
 //require controllers
-require_once './controller/controllerEmpleado.php';
-require_once './controller/controllerMesa.php';
-require_once './controller/controllerPedido.php';
-require_once './controller/controllerProducto.php';
-require_once './controller/controllerUsuario.php';
-require_once './controller/controllerPendientes.php';
+include_once './controller/controllerEmpleado.php';
+include_once './controller/controllerMesa.php';
+include_once './controller/controllerPedido.php';
+include_once './controller/controllerProducto.php';
+include_once './controller/controllerUsuario.php';
+include_once './controller/controllerPendientes.php';
+include_once './controller/controllerEncuestas.php';
 
 //require mw
-require_once './MW/MWVerificarUsuarioEmpleado.php';
-require_once './MW/MWVerificarPuestoEmpleado.php';
-require_once './MW/MWLogin.php';
-require_once './MW/MWVerificarTokenValido.php';
+include_once './MW/MWVerificarUsuarioEmpleado.php';
+include_once './MW/MWVerificarPuestoEmpleado.php';
+include_once './MW/MWLogin.php';
+include_once './MW/MWVerificarTokenValido.php';
 
 
-require_once './MW/MWVerificarSocio.php';
+include_once './MW/MWVerificarSocio.php';
 
 
 //require utilidades
-require_once './utilidades/jwt.php';
+include_once './utilidades/jwt.php';
 
 // Instantiate App
 $app = AppFactory::create();
@@ -81,13 +82,20 @@ $app->group('/pedido', function (RouteCollectorProxy $group){
     $group->post('/darDeAlta', \ControllerPedido::class . ':darDeAlta');
     $group->post('/entregarPedido', \ControllerPedido::class . ':entregarPedido');
     $group->get('/listarPedidos', \ControllerPedido::class . ':listarPedidos');
+    $group->get('/mesaRepetida', \ControllerPedido::class . ':traerMesaRepetida')->add(new MWVerificarSocio);
+    $group->get('/encuestasPositivas', \ControllerEncuesta::class . ':traerEncuestasPositivas')->add(new MWVerificarSocio);
+    $group->get('/pedidosFueraTiempo', \ControllerPedido::class . ':traerEntregasFueraTiempo')->add(new MWVerificarSocio);
+
 })->add(new MWVerificarTokenValido());;
 
+//CLIENTE
 $app->group('/cliente',function (RouteCollectorProxy $group)
 {
     $group->post('/estadoPedido', \ControllerPedido::class . ':clienteVerificaEstado');
+    $group->post('/cobrarPedido', \ControllerPedido::class . ':cobrarPedido');
 });
 
+//PENDIENTES
 $app->group('/pendientes', function (RouteCollectorProxy $group){
     $group->get('[/]', \ControllerPendientes::class . ':listarTodos');
     $group->get('/sector', \ControllerPendientes::class . ':listarPendientesPorSector');

@@ -1,7 +1,7 @@
 <?php
 
-require_once "./db/accesoDatos.php";
-require_once "./models/mesa.php";
+include_once "./db/accesoDatos.php";
+include_once "./models/mesa.php";
 
 class ControllerMesa extends Mesa
 {

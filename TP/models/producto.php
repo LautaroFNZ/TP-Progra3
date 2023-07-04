@@ -1,5 +1,7 @@
 <?php
 
+
+
 class Producto
 {
     public $id;
@@ -17,7 +19,7 @@ class Producto
 
     public function alta()
     {
-        $instancia = AccesoDatos::instance();
+        $instancia = accesoDatos::instance();
         $command = $instancia->preparer("INSERT INTO productos (nombre,sector,precio) VALUES (:nombre,:sector,:precio)");
         
         $command->bindValue(':nombre',strtolower($this->nombre),PDO::PARAM_STR);
@@ -30,7 +32,7 @@ class Producto
 
     public function productoExiste($nombre,$sector)
     {
-        $instancia = AccesoDatos::instance();
+        $instancia = accesoDatos::instance();
         $command = $instancia->preparer("SELECT id FROM productos WHERE nombre = :nombre AND sector = :sector");
         
         $command->bindValue(':nombre',$nombre);
@@ -42,7 +44,7 @@ class Producto
 
     public function listar()
     {
-        $instancia = AccesoDatos::instance();
+        $instancia = accesoDatos::instance();
         $command = $instancia->preparer("SELECT * FROM productos");
         $command->execute();
 
@@ -56,7 +58,7 @@ class Producto
 
     public static function buscarPorId($id)
     {
-        $instancia = AccesoDatos::instance();
+        $instancia = accesoDatos::instance();
         $command = $instancia->preparer("SELECT * FROM productos WHERE id = :id");
 
         $command->bindValue(':id',$id);
@@ -67,7 +69,7 @@ class Producto
 
     public static function traerSector($id)
     {
-        $instancia = AccesoDatos::instance();
+        $instancia = accesoDatos::instance();
         $command = $instancia->preparer("SELECT productos.sector FROM productos WHERE id = :id");
 
         $command->bindValue(':id',$id);

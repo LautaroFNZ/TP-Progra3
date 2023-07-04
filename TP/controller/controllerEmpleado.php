@@ -1,7 +1,7 @@
 <?php
 
-require_once "./models/empleado.php";
-require_once "./interfaces/ApiInterface.php";
+include_once "./models/empleado.php";
+include_once "./interfaces/ApiInterface.php";
 
 class ControllerEmpleado extends Empleado
 {

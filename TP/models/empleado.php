@@ -1,6 +1,6 @@
 <?php
 
-require "./db/accesoDatos.php";
+
 
 
 class Empleado
@@ -22,7 +22,7 @@ class Empleado
 
     public function alta()
     {
-        $instancia = AccesoDatos::instance();
+        $instancia = accesoDatos::instance();
         $command = $instancia->preparer("INSERT INTO empleados (nombre,puesto,usuario,password) VALUES (:nombre,:puesto,:usuario,:password)");
         
         $command->bindValue(':nombre',strtolower($this->nombre),PDO::PARAM_STR);
@@ -36,7 +36,7 @@ class Empleado
 
     public static function listar()
     {
-        $instancia = AccesoDatos::instance();
+        $instancia = accesoDatos::instance();
         $command = $instancia->preparer("SELECT * FROM empleados");
         $command->execute();
 
@@ -45,7 +45,7 @@ class Empleado
 
     public static function verificarUsuario($usuario)
     {
-        $instancia = AccesoDatos::instance();
+        $instancia = accesoDatos::instance();
         $command = $instancia->preparer("SELECT * FROM empleados WHERE usuario = :usuario");
         
         $command->bindValue(':usuario',$usuario,PDO::PARAM_STR);

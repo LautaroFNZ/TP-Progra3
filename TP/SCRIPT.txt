@@ -16,7 +16,10 @@ CREATE TABLE pedidos (
   fechaEstimada varchar(100) NOT NULL
 );
 
-CREATE TABLE mesa (id INT AUTO_INCREMENT PRIMARY KEY,status varchar(50) not null);
+CREATE TABLE mesa (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  status varchar(50) not null
+);
 
 
 CREATE TABLE productos{
@@ -34,6 +37,25 @@ CREATE TABLE pendientes(
   estado varchar(50) NOT NULL,
   fechaEntregaPedido varchar(100) NOT NULL,
   fechaEntregaReal varchar(100) NOT NULL  
+)
+
+CREATE TABLE encuestas(
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  puntajeMesa INT not null,
+  puntajeResto INT not null,
+  puntajeMozo INT not null,
+  puntajeCocinero INT not null,
+  puntajePromedio float not null,
+  nroPedido INT not null,
+  nombreCliente varchar(100) not null
+)
+
+CREATE TABLE facturas(
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  precio float not null,
+  nroPedido int not null,
+  idMesa int not null,
+  nombreCliente varchar(100)
 )
 
 

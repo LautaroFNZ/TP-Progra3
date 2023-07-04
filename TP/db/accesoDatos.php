@@ -1,7 +1,7 @@
 <?php
-class AccesoDatos
+class accesoDatos
 {
-    private static $ObjetoAccesoDatos;
+    private static $ObjetoaccesoDatos;
     private $objetoPDO;
  
     private function __construct()
@@ -27,10 +27,10 @@ class AccesoDatos
  
     public static function instance()
     { 
-        if (!isset(self::$ObjetoAccesoDatos)) {          
-            self::$ObjetoAccesoDatos = new AccesoDatos(); 
+        if (!isset(self::$ObjetoaccesoDatos)) {          
+            self::$ObjetoaccesoDatos = new accesoDatos(); 
         } 
-        return self::$ObjetoAccesoDatos;        
+        return self::$ObjetoaccesoDatos;        
     }
  
  

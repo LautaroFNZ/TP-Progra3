@@ -1,8 +1,8 @@
 <?php
 
-require_once "./db/accesoDatos.php";
-require_once "./models/pedido.php";
-require_once "./models/pendientes.php";
+include_once "./db/accesoDatos.php";
+include_once "./models/pedido.php";
+include_once "./models/pendientes.php";
 
 class ControllerPendientes extends Pendientes
 {
@@ -36,7 +36,7 @@ class ControllerPendientes extends Pendientes
             {
                 $token = trim(explode("Bearer", $header)[1]);
                 $datos = AutentificadorJWT::ObtenerData($token);
-                $datos->puesto = 'cervezero';
+                //$datos->puesto = 'cocinero';
             }
 
             $pendiente = new Pendientes();
@@ -72,7 +72,7 @@ class ControllerPendientes extends Pendientes
             {
                 $token = trim(explode("Bearer", $header)[1]);
                 $datos = AutentificadorJWT::ObtenerData($token);
-                $datos->puesto = 'cervezero';
+                //$datos->puesto = 'cocinero';
             }
             
             if($datos->puesto == $pendientes->sector)

@@ -1,5 +1,7 @@
 <?php
 
+
+
 class Usuario{
     public $usuario;
     public $fechaString;
@@ -14,7 +16,7 @@ class Usuario{
 
     public function alta()
     {
-        $instancia = AccesoDatos::instance();
+        $instancia = accesoDatos::instance();
         $command = $instancia->preparer("INSERT INTO info_login (usuario,fechaString,puesto) VALUES (:usuario,:fechaString,:puesto)");
         
         $command->bindValue(':usuario',strtolower($this->usuario),PDO::PARAM_STR);
@@ -27,7 +29,7 @@ class Usuario{
 
     public static function listar()
     {
-        $instancia = AccesoDatos::instance();
+        $instancia = accesoDatos::instance();
         $command = $instancia->preparer("SELECT * FROM info_login");
         $command->execute();
 

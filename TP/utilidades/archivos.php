@@ -1,6 +1,6 @@
 <?php
 
-require_once "./models/empleado.php";
+include_once "./models/empleado.php";
 
 class Archivos
 {

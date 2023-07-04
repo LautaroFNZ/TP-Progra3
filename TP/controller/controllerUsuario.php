@@ -1,9 +1,9 @@
 <?php
 
-require_once "./models/empleado.php";
-require_once "./models/usuario.php";
-require_once "./interfaces/ApiInterface.php";
-require_once "./utilidades/archivos.php";
+include_once "./models/empleado.php";
+include_once "./models/usuario.php";
+include_once "./interfaces/ApiInterface.php";
+include_once "./utilidades/archivos.php";
 
 
 class ControllerUsuario extends Usuario

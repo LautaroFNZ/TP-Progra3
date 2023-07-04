@@ -1,5 +1,7 @@
 <?php
 
+
+
 class Pendientes
 {
     public $id;
@@ -22,7 +24,7 @@ class Pendientes
 
     public function alta()
     {
-        $instancia = AccesoDatos::instance();
+        $instancia = accesoDatos::instance();
         $command = $instancia->preparer("INSERT INTO pendientes (idProducto,nroPedido,sector,estado,fechaEntregaPedido,fechaEntregaReal) VALUES (:idProducto,:nroPedido,:sector,:estado,:fechaEntregaPedido,:fechaEntregaReal)");
         
 
@@ -39,7 +41,7 @@ class Pendientes
 
     public function listar()
     {
-        $instancia = AccesoDatos::instance();
+        $instancia = accesoDatos::instance();
         $command = $instancia->preparer("SELECT * FROM pendientes");
         $command->execute();
 
@@ -48,7 +50,7 @@ class Pendientes
 
     public function listarPorSector($puesto)
     {
-        $instancia = AccesoDatos::instance();
+        $instancia = accesoDatos::instance();
         $command = $instancia->preparer("SELECT * FROM pendientes WHERE sector = :sector AND estado <> 'listo'");
         
         $command->bindValue(':sector',strtolower($puesto),PDO::PARAM_STR);
@@ -59,7 +61,7 @@ class Pendientes
 
     public static function buscarId($id)
     {
-        $instancia = AccesoDatos::instance();
+        $instancia = accesoDatos::instance();
         $command = $instancia->preparer("SELECT * FROM pendientes WHERE id = :id");
 
         $command->bindValue(':id',$id);
@@ -72,7 +74,7 @@ class Pendientes
 
     public static function pendienteListo($id)
     {
-        $instancia = AccesoDatos::instance();
+        $instancia = accesoDatos::instance();
         $command = $instancia->preparer("UPDATE pendientes SET estado = 'listo', fechaEntregaReal = :fechaReal WHERE id = :id");
 
         $command->bindValue(':id',$id);
@@ -84,7 +86,7 @@ class Pendientes
 
     public static function consultarEstado($nroPedido,$idProducto)
     {
-        $instancia = AccesoDatos::instance();
+        $instancia = accesoDatos::instance();
         
 
         $command = $instancia->preparer("SELECT pendientes.estado FROM pendientes WHERE idProducto = :idProducto AND nroPedido = :nroPedido");
@@ -95,6 +97,7 @@ class Pendientes
 
         return $command->fetchColumn();
     }
+
 
 }
 

@@ -1,7 +1,7 @@
 <?php
 
-require_once "./db/accesoDatos.php";
-require_once "./models/producto.php";
+include_once "./db/accesoDatos.php";
+include_once "./models/producto.php";
 
 class ControllerProducto extends Producto implements IApiUsable
 {

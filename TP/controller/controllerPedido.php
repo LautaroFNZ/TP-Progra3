@@ -1,11 +1,13 @@
 <?php
 
-require_once "./db/accesoDatos.php";
-require_once "./models/pedido.php";
-require_once "./models/producto.php";
-require_once './models/mesa.php';
-require_once './models/pendientes.php';
-require_once './controller/controllerPendientes.php';
+include_once "./db/accesoDatos.php";
+include_once "./models/pedido.php";
+include_once "./models/producto.php";
+include_once './models/mesa.php';
+include_once './models/pendientes.php';
+include_once './models/factura.php';
+include_once './models/encuesta.php';
+include_once './controller/controllerPendientes.php';
 
 
 class ControllerPedido extends Pedido
@@ -170,24 +172,117 @@ class ControllerPedido extends Pedido
                 $fechaActual = new DateTime(date('d-m-y H:i:s'));
                 $fechaEntregaEstimada = new DateTime($pedido->fechaEstimada);
                 
-                if ($fechaActual < $fechaEntregaEstimada) {
-                    $fechaEstimadaEntrega = $fechaActual->diff($fechaEntregaEstimada);
-                    $payload = json_encode(array('El tiempo de espera estimado para la entrega es de:'=> $fechaEstimadaEntrega->format('$h:$i')));
-                } else {
-                    $payload = json_encode(array('mensaje'=>'Estamos atrasados, disculpe la demora.'));
-                }
+                if ($fechaActual < $fechaEntregaEstimada)
+                {
+                    $payload = json_encode(array('Su pedido estara aproximadamente a las:' => $fechaEntregaEstimada->format("h:i")));
 
-
+                } else $payload = json_encode(array('mensaje'=>'Estamos atrasados, disculpe la demora.'));
 
             }
 
-        }else $payload = json_encode(array('mensaje'=>'conchitaPutita'));
+        }else $payload = json_encode(array('mensaje'=>'Verifique los parametros'));
 
 
         $response->getBody()->write($payload);
 
         return $response->withHeader('Content-Type', 'application/json');
     }
+
+    public function cobrarPedido($request, $response, $args)
+    {
+        $params = $request->getParsedBody();
+
+        if(isset($params['nroPedido']) && isset($params['idMesa']) && isset($params['puntajeMesa']) && isset($params['puntajeResto']) && isset($params['puntajeCocinero']) &&  isset($params['puntajeMozo']) && isset($params['nombreCliente']))
+        {
+
+            $nroPedido = $params['nroPedido'];
+            $idMesa = $params['idMesa'];
+            $puntajeMesa = $params['puntajeMesa'];
+            $puntajeResto = $params['puntajeResto'];
+            $puntajeCocinero = $params['puntajeCocinero'];
+            $puntajeMozo = $params['puntajeMozo'];
+            $nombreCliente = $params['nombreCliente'];
+
+            if($pedido = Pedido::buscarPorId($nroPedido,$idMesa))
+            {   
+
+                //$payload = json_encode($pedido->estadoPedido);
+                
+                if( $pedido->estadoPedido == 'entregado' )
+                {
+                    Pedido::modificarEstadoPedido($nroPedido,'cobrado');
+                    Mesa::cambiarEstado($idMesa,'con cliente pagando');
+                    $factura = new Factura();
+                    $factura->setter($pedido->precioTotal,$nroPedido,$idMesa,$nombreCliente);
+                    $factura->id = $factura->alta();
+
+                
+                    $encuesta = new Encuesta();
+                    $encuesta->setter($puntajeMesa,$puntajeResto,$puntajeMozo,$puntajeCocinero,$nroPedido,$nombreCliente);
+                    $encuesta->id = $encuesta->alta();
+                    
+
+                    $payload = json_encode(array('mensaje'=>'Pedido cobrado con exito! Vuelva pronto','Factura generada'=>$factura,'Encuesta generada'=>$encuesta));
+                
+                }else $payload = json_encode(array('mensaje'=>'El pedido todavia no fue entregado'));
+                
+            }else $payload = json_encode(array('mensaje'=>'El pedido no fue encontrado'));
+
+        }else $payload = json_encode(array('mensaje'=>'Verifique los parametros'));
+
+        $response->getBody()->write($payload);
+
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
+    public function traerMesaRepetida($request, $response, $args)
+    {
+        try
+        {
+            $pedido = new Pedido();
+            $pedido = $pedido->traerIdMesaMasRepetido();
+            if($pedido)
+            {
+                $payload = json_encode(array("La mesa mas usada fue la numero:" => $pedido));
+
+            }else $payload = json_encode(array('mensaje'=>"No hay una mesa que destaque sobre el resto"));
+
+        }
+        catch (Exception $e)
+        {
+            $payload = json_encode(array('mensaje' => $e->getMessage()));
+        }
+
+        $response->getBody()->write($payload);
+
+        return $response->withHeader('Content-Type', 'application/json');
+
+    }
+
+    public function traerEntregasFueraTiempo($request, $response, $args)
+    {
+        try
+        {
+            $pedido = new Pedido();
+            $pedido = $pedido->entregasFueraTiempo();
+            if($pedido)
+            {
+                $payload = json_encode(array("Estos fueron los pedidos entregados fuera de termino:" => $pedido));
+
+            }else $payload = json_encode(array('mensaje'=>"Todos los pedidos fueron entregados a termino"));
+
+        }
+        catch (Exception $e)
+        {
+            $payload = json_encode(array('mensaje' => $e->getMessage()));
+        }
+
+        $response->getBody()->write($payload);
+
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
+    
     
 
 }

@@ -1,5 +1,7 @@
 <?php
 
+
+
 class Mesa
 {
     public $id;
@@ -12,7 +14,7 @@ class Mesa
 
     public function alta()
     {
-        $instancia = AccesoDatos::instance();
+        $instancia = accesoDatos::instance();
         $command = $instancia->preparer("INSERT INTO mesa (status) VALUES (:status)");
         
         $command->bindValue(':status',strtolower($this->status),PDO::PARAM_STR);
@@ -23,7 +25,7 @@ class Mesa
 
     public function listar()
     {
-        $instancia = AccesoDatos::instance();
+        $instancia = accesoDatos::instance();
         $command = $instancia->preparer("SELECT * FROM mesa");
         $command->execute();
 
@@ -32,7 +34,7 @@ class Mesa
 
     public static function buscarId($id)
     {
-        $instancia = AccesoDatos::instance();
+        $instancia = accesoDatos::instance();
         $command = $instancia->preparer("SELECT * FROM mesa WHERE id=:id");
         $command->bindValue(':id',$id);
         $command->execute();
@@ -42,7 +44,7 @@ class Mesa
 
     public static function mesaDisponible($id)
     {
-        $instancia = AccesoDatos::instance();
+        $instancia = accesoDatos::instance();
         $command = $instancia->preparer("SELECT mesa.status FROM mesa WHERE id=:id");
         $command->bindValue(':id',$id);
         $command->execute();
@@ -56,7 +58,7 @@ class Mesa
 
     public static function cambiarEstado($id,$estado)
     {
-        $instancia = AccesoDatos::instance();
+        $instancia = accesoDatos::instance();
         $command = $instancia->preparer("UPDATE mesa SET status = :estado where id=:id");
         $command->bindValue(':id',$id);
         $command->bindValue(':estado',$estado);
