@@ -37,6 +37,7 @@ class Archivos
     public function guardarUsuariosCSV($path)
     {
         $retorno = false;
+        $csv = '';
 
         if($ar = fopen($path,"w"))
         {
@@ -50,9 +51,10 @@ class Archivos
                 {
                     $linea = $empleado->id . "," . $empleado->nombre . "," . $empleado->puesto . ",". $empleado->usuario . ","  . $empleado->password . "\n";
                     fwrite($ar,$linea);
+                    $csv .= $linea;
                 }
 
-                $retorno = true;
+                return $csv;
             }   
         }   
 

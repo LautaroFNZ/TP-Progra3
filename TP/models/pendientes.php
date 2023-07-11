@@ -1,42 +1,63 @@
 <?php
 
-
-
 class Pendientes
 {
     public $id;
     public $idProducto;
+    public $linkPedido;
     public $nroPedido;
+    public $idEmpleado;
     public $sector;
     public $estado;
-    public $fechaEntregaPedido;
+    public $fechaEstimada;
     public $fechaEntregaReal;
 
-    public function setter($idProducto,$nroPedido,$sector,$fechaEntregaPedido)
+    public function setter($idProducto,$nroPedido,$sector,$linkPedido)
     {
         $this->idProducto = $idProducto;
         $this->nroPedido = $nroPedido;
+        $this->idEmpleado = -1;
         $this->sector = $sector;
-        $this->estado = 'en preparacion';
-        $this->fechaEntregaPedido = $fechaEntregaPedido;
+        $this->linkPedido = $linkPedido;
+        $this->estado = 'pendiente';
+        $this->fechaEstimada = '';
         $this->fechaEntregaReal = '';
     }
 
     public function alta()
     {
         $instancia = accesoDatos::instance();
-        $command = $instancia->preparer("INSERT INTO pendientes (idProducto,nroPedido,sector,estado,fechaEntregaPedido,fechaEntregaReal) VALUES (:idProducto,:nroPedido,:sector,:estado,:fechaEntregaPedido,:fechaEntregaReal)");
+        $command = $instancia->preparer("INSERT INTO pendientes (idProducto,nroPedido,idEmpleado,sector,estado,fechaEstimada,fechaEntregaReal,linkPedido) VALUES (:idProducto,:nroPedido,:idEmpleado,:sector,:estado,:fechaEstimada,:fechaEntregaReal,:linkPedido)");
         
 
         $command->bindValue(':idProducto',$this->idProducto);
-        $command->bindValue(':nroPedido',$this->nroPedido);
+        $command->bindValue(':nroPedido',$this->nroPedido,PDO::PARAM_STR);
+        $command->bindValue(':idEmpleado',$this->idEmpleado);
         $command->bindValue(':sector',strtolower($this->sector),PDO::PARAM_STR);
         $command->bindValue(':estado',strtolower($this->estado));
-        $command->bindValue(':fechaEntregaPedido',$this->fechaEntregaPedido,PDO::PARAM_STR);
+        $command->bindValue(':fechaEstimada',$this->fechaEstimada,PDO::PARAM_STR);
         $command->bindValue(':fechaEntregaReal',$this->fechaEntregaReal,PDO::PARAM_STR);
+        $command->bindValue(':linkPedido',$this->linkPedido,PDO::PARAM_STR);
         $command->execute();
 
         return $instancia->lastId();
+    }
+
+    public static function asignarPendiente($idPendiente,$idEmpleado,$tiempo,$sector)
+    {
+        $instancia = accesoDatos::instance();
+        $command = $instancia->preparer("UPDATE pendientes SET fechaEstimada = :tiempo, idEmpleado = :idEmpleado, estado = 'en Preparacion' WHERE sector = :sector AND id = :idPendiente");
+        
+        $command->bindValue(':tiempo',date('d-m-y H:i:s', strtotime("+{$tiempo} minutes")),PDO::PARAM_STR);
+        $command->bindValue(':idEmpleado',intval($idEmpleado));
+        $command->bindValue(':idPendiente',intval($idPendiente));
+        $command->bindValue(':sector',$sector,PDO::PARAM_STR);
+        
+        
+        $filasAfectadas = $command->execute();
+
+        return $filasAfectadas > 0;
+
     }
 
     public function listar()
@@ -51,13 +72,27 @@ class Pendientes
     public function listarPorSector($puesto)
     {
         $instancia = accesoDatos::instance();
-        $command = $instancia->preparer("SELECT * FROM pendientes WHERE sector = :sector AND estado <> 'listo'");
+        $command = $instancia->preparer("SELECT * FROM pendientes WHERE sector = :sector AND estado <> 'listo para servir'");
         
         $command->bindValue(':sector',strtolower($puesto),PDO::PARAM_STR);
         $command->execute();
 
         return $command->fetchAll(PDO::FETCH_CLASS, 'Pendientes');
     }
+
+    public function listarPosUsuario($idEmpleado)
+    {
+        $instancia = accesoDatos::instance();
+        $command = $instancia->preparer("SELECT * FROM pendientes WHERE idEmpleado = :idEmpleado AND estado <> 'listo para servir'");
+        
+        $command->bindValue(':idEmpleado',strtolower($idEmpleado),PDO::PARAM_STR);
+        $command->execute();
+
+        return $command->fetchAll(PDO::FETCH_CLASS, 'Pendientes');
+    }
+
+
+
 
     public static function buscarId($id)
     {
@@ -75,7 +110,7 @@ class Pendientes
     public static function pendienteListo($id)
     {
         $instancia = accesoDatos::instance();
-        $command = $instancia->preparer("UPDATE pendientes SET estado = 'listo', fechaEntregaReal = :fechaReal WHERE id = :id");
+        $command = $instancia->preparer("UPDATE pendientes SET estado = 'listo para servir', fechaEntregaReal = :fechaReal WHERE id = :id");
 
         $command->bindValue(':id',$id);
         $command->bindValue(':fechaReal',date('d-m-y H:i:s'));
@@ -83,6 +118,8 @@ class Pendientes
 
         return $command->fetchObject('Pendientes'); 
     }
+
+
 
     public static function consultarEstado($nroPedido,$idProducto)
     {
@@ -97,6 +134,23 @@ class Pendientes
 
         return $command->fetchColumn();
     }
+
+    public static function listarPendientesListos()
+    {
+        $instancia = accesoDatos::instance();
+        $command = $instancia->preparer("SELECT p.idProducto, p.linkPedido, pd.estadoPedido, pd.idMesa FROM pendientes p INNER JOIN pedidos pd ON p.linkPedido = pd.linkPendiente WHERE p.estado = 'listo para servir';");
+        $command->execute();
+
+        return $command->fetchAll();
+    }
+
+    public static function pendienteNoAsignado($id)
+    {
+        $pendiente = Pendientes::buscarId($id);
+
+        return $pendiente->idEmpleado == -1;
+    }
+
 
 
 }

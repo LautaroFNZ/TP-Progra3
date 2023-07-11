@@ -18,15 +18,21 @@ include_once './controller/controllerProducto.php';
 include_once './controller/controllerUsuario.php';
 include_once './controller/controllerPendientes.php';
 include_once './controller/controllerEncuestas.php';
+include_once './controller/controllerFactura.php';
 
 //require mw
 include_once './MW/MWVerificarUsuarioEmpleado.php';
 include_once './MW/MWVerificarPuestoEmpleado.php';
 include_once './MW/MWLogin.php';
 include_once './MW/MWVerificarTokenValido.php';
+include_once './MW/MWVerificarMesa.php';
+include_once './MW/MWVerificarIdPendiente.php';
 
 
 include_once './MW/MWVerificarSocio.php';
+include_once './MW/MWVerificarMozo.php';
+
+include_once './MW/MWBuscarUsuario.php';
 
 
 //require utilidades
@@ -55,9 +61,22 @@ $app->group('/usuarios', function (RouteCollectorProxy $group){
     $group->get('[/]', \ControllerUsuario::class . ':listarFechaLogin');
     $group->get('/guardarUsuarios', \ControllerUsuario::class . ':guardarEnCsv');
     $group->get('/leerUsuarios', \ControllerUsuario::class . ':leerUsuariosCsv');
+    $group->get('/descargarLogo', \ControllerUsuario::class . ':descargarLogoEmpresa');
+    $group->post('/registrosUsuario', \ControllerUsuario::class . ':listarRegistrosUsuario')->add(new MWBuscarUsuario());
+
 })->add(new MWVerificarSocio());
 
+$app->group('/mozo', function (RouteCollectorProxy $group){
+    $group->get('[/]', \ControllerPedido::class . ':mostrarListosParaEntregar');
+    $group->post('/entregarPedido', \ControllerPedido::class . ':entregarPedido');
+    $group->post('/cobrarPedido', \ControllerPedido::class . ':cobrarPedido');
+})->add(new MWVerificarMozo());
     
+
+$app->group('/factura', function (RouteCollectorProxy $group){
+    $group->get('/mesaMasFacturo', \ControllerFactura::class . ':listarMesasOrdFact')->add(new MWVerificarSocio());
+    $group->post('/mesaFacturadoFechas', \ControllerFactura::class . ':traerFacturadoMesaEnFechas')->add(new MWVerificarSocio());
+})->add(new MWVerificarTokenValido());
 
 
 //Manejo de Empleados
@@ -79,12 +98,12 @@ $app->group('/mesa', function (RouteCollectorProxy $group){
 
 //Manejo de Pedidos
 $app->group('/pedido', function (RouteCollectorProxy $group){
-    $group->post('/darDeAlta', \ControllerPedido::class . ':darDeAlta');
-    $group->post('/entregarPedido', \ControllerPedido::class . ':entregarPedido');
+    $group->post('/darDeAlta', \ControllerPedido::class . ':darDeAlta')->add(new MWVerificarMesa());
     $group->get('/listarPedidos', \ControllerPedido::class . ':listarPedidos');
     $group->get('/mesaRepetida', \ControllerPedido::class . ':traerMesaRepetida')->add(new MWVerificarSocio);
     $group->get('/encuestasPositivas', \ControllerEncuesta::class . ':traerEncuestasPositivas')->add(new MWVerificarSocio);
     $group->get('/pedidosFueraTiempo', \ControllerPedido::class . ':traerEntregasFueraTiempo')->add(new MWVerificarSocio);
+    $group->get('/productosMasVendidos', \ControllerPedido::class . ':mostrarProductosMasVendidos')->add(new MWVerificarSocio);
 
 })->add(new MWVerificarTokenValido());;
 
@@ -99,7 +118,9 @@ $app->group('/cliente',function (RouteCollectorProxy $group)
 $app->group('/pendientes', function (RouteCollectorProxy $group){
     $group->get('[/]', \ControllerPendientes::class . ':listarTodos');
     $group->get('/sector', \ControllerPendientes::class . ':listarPendientesPorSector');
-    $group->get('/establecerListo/{id}',\ControllerPendientes::class . ':establecerPendienteListo');
+    $group->get('/usuario', \ControllerPendientes::class . ':listarPendientesPorUsuario');
+    $group->post('/asignarPendiente',\ControllerPendientes::class . ':asignarPendienteEmpleado')->add(new MWVerificarIdPendiente());
+    $group->get('/establecerListo/{idPendiente}',\ControllerPendientes::class . ':establecerPendienteListo');
 })->add(new MWVerificarTokenValido());;
 
 //Manejo de Productos
@@ -121,3 +142,7 @@ $app->post('[/]', function (Request $request, Response $response) {
 
 
 $app->run();
+
+
+
+//TODO: ENTREGAR PEDIDO -> ENLAZAR PENDIENTE CON PEDIDO. VERIFICAR FUNCIONAMIENTO PARTES HECHAS + AGREGAR PARTES NUEVAS Y MIERDA DEL PDF

@@ -15,9 +15,9 @@ class Mesa
     public function alta()
     {
         $instancia = accesoDatos::instance();
-        $command = $instancia->preparer("INSERT INTO mesa (status) VALUES (:status)");
+        $command = $instancia->preparer("INSERT INTO mesa (status) VALUES ('cerrada')");
         
-        $command->bindValue(':status',strtolower($this->status),PDO::PARAM_STR);
+        //$command->bindValue(':status',strtolower($this->status),PDO::PARAM_STR);
         $command->execute();
 
         return $instancia->lastId();

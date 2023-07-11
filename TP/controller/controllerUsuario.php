@@ -4,6 +4,7 @@ include_once "./models/empleado.php";
 include_once "./models/usuario.php";
 include_once "./interfaces/ApiInterface.php";
 include_once "./utilidades/archivos.php";
+include_once "./PDF/fpdf.php";
 
 
 class ControllerUsuario extends Usuario
@@ -25,7 +26,7 @@ class ControllerUsuario extends Usuario
 
                     $info = array('id'=> $empleadoEncontrado->id,'usuario'=>$empleadoEncontrado->usuario,'puesto'=>$empleadoEncontrado->puesto);
                     $token = AutentificadorJWT::CrearToken($info);
-                    $payload = json_encode(array('jwt' => $token));
+                    $payload = json_encode(array('jwt' => $token,'puesto'=>$empleadoEncontrado->puesto));
                     $response->getBody()->write($payload);
                     $usuario = new Usuario();
                     $usuario->setter($empleadoEncontrado->usuario,$empleadoEncontrado->puesto);
@@ -75,14 +76,41 @@ class ControllerUsuario extends Usuario
     {
         $archivo = new Archivos();
 
-        if($archivo->guardarUsuariosCSV("usuarios.csv"))
+        if($csv = $archivo->guardarUsuariosCSV("usuarios.csv"))
         {
-            $payload = json_encode(array('mensaje'=>'Empleados guardados con exito como "usuarios.csv"'));
-
+            $payload = $csv;
+   
         }else $payload = json_encode(array('mensaje'=>'Error al guardar los empleados'));
 
         $response->getBody()->write($payload);
 
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
+    public function descargarLogoEmpresa($request,$response,$args)
+    {
+        $pdf = new FPDF('p','mm','A3');
+        $pdf->AddPage();
+        $pdf->Image(__DIR__ . '\..\logoRestaurante.jpg', 11.25, null, 280, 280, 'jpg');
+
+        return $pdf->Output();
+    }
+
+    public function listarRegistrosUsuario($request,$response,$args)
+    {
+        $parametros = $request->getParsedBody();
+
+        $usuarios = Usuario::traerRegistroUsuario($parametros['usuario']);
+        if($usuarios)
+        {
+            $payload = json_encode(array('Registro de loggeo del usuario'=> $parametros['usuario'],''=>$usuarios));
+
+        }else $payload = json_encode(array('No existen registros para el usuario'=> $parametros['usuario']));
+    
+        
+
+        $response->getBody()->write($payload);
+    
         return $response->withHeader('Content-Type', 'application/json');
     }
 

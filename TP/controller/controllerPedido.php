@@ -19,89 +19,57 @@ class ControllerPedido extends Pedido
         if(isset($params['idMesa']) && isset($params['idProductos']))
         {
             $idMesa = $params['idMesa'];
-            $retorno = json_decode($this->buscarIdProducto(explode(',',$params['idProductos'])));
-            
-            if(isset($retorno->lista) && isset($retorno->precio)) 
+            $idProductos = explode(',',$params['idProductos']);
+
+            $header = $request->getHeaderLine('Authorization');
+
+            if ($header != null)
             {
-                $pedido = new Pedido();
+                $token = trim(explode("Bearer", $header)[1]);
+                $datos = AutentificadorJWT::ObtenerData($token);
 
-                $header = $request->getHeaderLine('Authorization');
+                $cantidadId = 0;
 
-                if ($header != null)
-                {
-                    $token = trim(explode("Bearer", $header)[1]);
-                    $datos = AutentificadorJWT::ObtenerData($token);
-                    
-                    if(Mesa::buscarId($idMesa))
-                    {
-                        if(Mesa::mesaDisponible($idMesa))
-                        {
-                            $pedido->setter($idMesa,json_encode($retorno->lista),$datos->usuario,$retorno->precio);
-                            Mesa::cambiarEstado($idMesa,"con cliente esperando pedido");
-                            $pedido->id = $pedido->alta();
-                            $this->agregarPendientes($retorno->lista,$pedido->id,$pedido->fechaEstimada);
-                            
-                            $payload = json_encode(array('Mensaje'=>'Pedido dato de alta con exito!','Pedido'=>$pedido));
-
-                        }else $payload = json_encode(array('Mensaje'=>'La mesa no esta disponible'));
-
-
-                    }else $payload = json_encode(array('mensaje'=>'No hemos encontrado la mesa'));
-                    
-                }
+                $nroPedido = Pedido::generadorId(5);
+                $idNoEncontradas = array();
                 
-            }else $payload = json_decode($retorno);
+                if($datos->puesto == 'mozo')
+                {
+                    foreach($idProductos as $id)
+                    {
+                        if($producto = Producto::buscarPorId($id))
+                        {
+                            $linkPendiente = Pedido::generadorId(3);
+                            $pedido = new Pedido();
+                            
+                            $pedido->setter($idMesa,$nroPedido,$producto->id,$datos->id,$producto->precio,$linkPendiente);
+                            $pedido->alta();
+                            $pendiente = new Pendientes();
+                            
+                            $pendiente->setter($producto->id,$nroPedido,Producto::traerSector($producto->id),$linkPendiente);
+                            $pendiente->alta();
+                            
+                            Mesa::cambiarEstado($idMesa,'con cliente esperando pedido');
+                            $cantidadId += 1;
+                            
+                        }else array_push($idNoEncontradas,$id);
+                    }
+                    
+                    if(count($idProductos) == $cantidadId)
+                    {
+                        $payload = json_encode(array('mensaje'=>'Hemos generado los pedidos','Su numero de pedido es'=> $nroPedido));
+                    }else{
+                        $payload = json_encode(array('mensaje'=>'No hemos podido dar de alta los siguientes productos','Lista'=> $idNoEncontradas));
+                    }
+
+                }else $payload = json_encode(array('mensaje'=>'Accion solo valida para mozos.'));
+            }
             
-
         }else $payload = json_encode(array('mensaje'=>'Verifique los parametros'));
-
 
         $response->getBody()->write($payload);
 
         return $response->withHeader('Content-Type', 'application/json');
-    }
-
-
-    public function buscarIdProducto($array)
-    {       
-        $dev = array();
-        $precio = 0;
-
-        if($array)
-        {
-            foreach($array as $idProducto)
-            {
-                if($pExist = Producto::buscarPorId($idProducto))
-                {
-                    array_push($dev,array('id'=>$idProducto));
-                    $precio += $pExist->precio;
-                }
-            }
-        }
-
-        if(count($array) == count($dev))
-        {
-            return json_encode(array('lista'=>$dev,'precio'=>$precio));
-
-        }else return json_encode(array('mensaje'=> 'No hemos podido validar todos los ID ingresados'));
-    }
-
-    public function agregarPendientes($lista,$nroPedido,$fechaEntregaPedido)
-    {
-        $retorno = false;
-        if($lista)
-        {
-            foreach($lista as $idPedido)
-            {
-                $pendientes = new Pendientes();
-
-                $pendientes->setter($idPedido->id,$nroPedido,Producto::traerSector($idPedido->id),$fechaEntregaPedido);
-                $pendientes->alta();
-                $retorno = true;
-            }
-        }
-
-        return $retorno;
     }
 
     public function entregarPedido($request, $response, $args)
@@ -118,7 +86,7 @@ class ControllerPedido extends Pedido
             if($pedidos && Mesa::buscarId($idMesa))
             { 
                 
-                if(ControllerPendientes::verificarEstadoPendientes($idPedido,$pedidos->idProductos))
+                if($pedidos->estadoPedido != 'entregado')
                 {
                     if(Pedido::asignarTiempoEntrega($idPedido,'entregado'))
                     {
@@ -128,7 +96,7 @@ class ControllerPedido extends Pedido
                     }else $payload = json_encode(array('mensaje'=>'No se pudo entregar el pedido!'));
                     
             
-                }else $payload = json_encode(array('mensaje'=>'Todavia no estan listos todos los productos!'));
+                }else $payload = json_encode(array('mensaje'=>'El pedido ya fue entregado'));
                 
 
             }else $payload = json_encode(array('mensaje'=>'ERROR al verificar los datos')); 
@@ -155,6 +123,7 @@ class ControllerPedido extends Pedido
         }
 
         $response->getBody()->write($payload);
+
         return $response->withHeader('Content-Type', 'application/json');
     }
 
@@ -167,18 +136,35 @@ class ControllerPedido extends Pedido
             $nroPedido = $params['nroPedido'];
             $idMesa = $params['idMesa'];
 
-            if($pedido = Pedido::buscarPorId($nroPedido,$idMesa))
+            if($pedidos = Pedido::buscarPorNroPedido($nroPedido,$idMesa))
             {
-                $fechaActual = new DateTime(date('d-m-y H:i:s'));
-                $fechaEntregaEstimada = new DateTime($pedido->fechaEstimada);
-                
-                if ($fechaActual < $fechaEntregaEstimada)
+                $tiempoEstimadoProductos = array();
+                foreach($pedidos as $pedido)
                 {
-                    $payload = json_encode(array('Su pedido estara aproximadamente a las:' => $fechaEntregaEstimada->format("h:i")));
+                    if($pedido->fechaEstimada != '')
+                    {
 
-                } else $payload = json_encode(array('mensaje'=>'Estamos atrasados, disculpe la demora.'));
+                        $fechaActual = new DateTime(date('d-m-y H:i:s'));   
+                        $fechaEntregaEstimada = new DateTime($pedido->fechaEstimada);
+                        
+                        if ($fechaActual < $fechaEntregaEstimada)
+                        {
+                            $intervalo = $fechaActual->diff($fechaEntregaEstimada);
+                            $diferenciaEnMinutos = $intervalo->i;
+        
+                            $registro = array('idProducto'=>$pedido->idProducto,'Aproximadamente'=>$diferenciaEnMinutos . ' minutos');
+                            array_push($tiempoEstimadoProductos,$registro);
+        
+                        }else {
+                            $registro = array('idProducto'=> $pedido->idProducto,'mensaje'=>'Estamos atrasados, disculpe la demora.');
+                            array_push($tiempoEstimadoProductos,$registro);
+                        }
+                    }
+                }
 
-            }
+                $payload = json_encode(array('mensaje'=>$tiempoEstimadoProductos));
+            
+            }else $payload = json_encode(array('mensaje'=>'No hemos encontrado su pedido'));
 
         }else $payload = json_encode(array('mensaje'=>'Verifique los parametros'));
 
@@ -192,7 +178,7 @@ class ControllerPedido extends Pedido
     {
         $params = $request->getParsedBody();
 
-        if(isset($params['nroPedido']) && isset($params['idMesa']) && isset($params['puntajeMesa']) && isset($params['puntajeResto']) && isset($params['puntajeCocinero']) &&  isset($params['puntajeMozo']) && isset($params['nombreCliente']))
+        if(isset($params['nroPedido']) && isset($params['idMesa']) && isset($params['puntajeMesa']) && isset($params['puntajeResto']) && isset($params['puntajeCocinero']) &&  isset($params['puntajeMozo']) && isset($params['nombreCliente']) && isset($params['comentarios']))
         {
 
             $nroPedido = $params['nroPedido'];
@@ -202,29 +188,47 @@ class ControllerPedido extends Pedido
             $puntajeCocinero = $params['puntajeCocinero'];
             $puntajeMozo = $params['puntajeMozo'];
             $nombreCliente = $params['nombreCliente'];
+            $comentarios = $params['comentarios'];
 
-            if($pedido = Pedido::buscarPorId($nroPedido,$idMesa))
+            if($pedidos = Pedido::buscarPorNroPedido($nroPedido,$idMesa))
             {   
+                $precioTotal = 0;
+                $contador = 0;
 
-                //$payload = json_encode($pedido->estadoPedido);
-                
-                if( $pedido->estadoPedido == 'entregado' )
+                foreach($pedidos as $pedido)
                 {
-                    Pedido::modificarEstadoPedido($nroPedido,'cobrado');
-                    Mesa::cambiarEstado($idMesa,'con cliente pagando');
-                    $factura = new Factura();
-                    $factura->setter($pedido->precioTotal,$nroPedido,$idMesa,$nombreCliente);
-                    $factura->id = $factura->alta();
+                    if($pedido->estadoPedido == 'cobrado')
+                    {
+                        $precioTotal += $pedido->precio;
+                        $contador++;
+                    }
 
+                    if($contador == count($pedidos))
+                    {
+                        $payload = json_encode(array('mensaje'=> 'Todos los pedidos fueron entregados','precio'=>$precioTotal));
+                        if(strlen($comentarios)<66)
+                        {
+                            if(Encuesta::validarPuntajes($puntajeMesa,$puntajeResto,$puntajeMozo,$puntajeCocinero))
+                            {   
+                                Pedido::modificarEstadoPedido($nroPedido,'cobrado');
+                                Mesa::cambiarEstado($idMesa,'con cliente pagando');
+                                
+                                $factura = new Factura();
+                                $factura->setter($precioTotal,$nroPedido,$idMesa,$nombreCliente);
+                                $factura->id = $factura->alta();
+                            
+                                $encuesta = new Encuesta();
+                                $encuesta->setter($puntajeMesa,$puntajeResto,$puntajeMozo,$puntajeCocinero,$nroPedido,$nombreCliente,$comentarios);
+                                $encuesta->id = $encuesta->alta();
                 
-                    $encuesta = new Encuesta();
-                    $encuesta->setter($puntajeMesa,$puntajeResto,$puntajeMozo,$puntajeCocinero,$nroPedido,$nombreCliente);
-                    $encuesta->id = $encuesta->alta();
+                                $payload = json_encode(array('mensaje'=>'Pedido cobrado con exito! Vuelva pronto'));//,'Factura generada'=>$factura,'Encuesta generada'=>$encuesta));
+                            }else $payload = json_encode(array('mensaje'=> 'Verifique que todos los puntajes sean menor o igual a 10'));
+
+                        }else $payload = json_encode(array('mensaje'=> 'Ingrese un comentario menor a 66 caracteres para continuar','Caracteres actuales'=>strlen($comentarios)));
+
+                    }else $payload = json_encode(array('mensaje'=> 'No fueron entregados todos los pedidos'));
                     
-
-                    $payload = json_encode(array('mensaje'=>'Pedido cobrado con exito! Vuelva pronto','Factura generada'=>$factura,'Encuesta generada'=>$encuesta));
-                
-                }else $payload = json_encode(array('mensaje'=>'El pedido todavia no fue entregado'));
+                }
                 
             }else $payload = json_encode(array('mensaje'=>'El pedido no fue encontrado'));
 
@@ -279,6 +283,47 @@ class ControllerPedido extends Pedido
 
         $response->getBody()->write($payload);
 
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
+    public function mostrarListosParaEntregar($request, $response, $args)
+    {
+        try
+        {
+            if($pedidos = Pedido::listarPedidosListos())
+            {
+                $payload = json_encode(array("listaPedidos" => $pedidos));
+
+            }else $payload = json_encode(array("mensaje" =>'No hay pendientes listos para entregar!'));
+
+        }
+        catch (Exception $e)
+        {
+            $payload = json_encode(array('mensaje' => $e->getMessage()));
+        }
+
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json');
+
+    }
+
+    public function mostrarProductosMasVendidos($request, $response, $args)
+    {
+        try
+        {
+            if($pedidos = Pedido::obtenerProductosMasVendidos())
+            {
+                $payload = json_encode(array("Productos mas vendidos" => $pedidos));
+
+            }else $payload = json_encode(array("mensaje" =>'No se vendieron productos'));
+
+        }
+        catch (Exception $e)
+        {
+            $payload = json_encode(array('mensaje' => $e->getMessage()));
+        }
+
+        $response->getBody()->write($payload);
         return $response->withHeader('Content-Type', 'application/json');
     }
 

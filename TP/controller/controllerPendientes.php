@@ -59,13 +59,10 @@ class ControllerPendientes extends Pendientes
         return $response->withHeader('Content-Type', 'application/json');
     }
 
-
-    public function establecerPendienteListo($request, $response, $args)
+    public function listarPendientesPorUsuario($request, $response, $args)
     {
-        $id = $args['id'];
-        $pendientes = Pendientes::buscarId($id);
-        if($pendientes)
-        {   
+        try
+        {
             $header = $request->getHeaderLine('Authorization');
 
             if ($header != null)
@@ -74,18 +71,119 @@ class ControllerPendientes extends Pendientes
                 $datos = AutentificadorJWT::ObtenerData($token);
                 //$datos->puesto = 'cocinero';
             }
+
+            $pendiente = new Pendientes();
+            $pendientes = $pendiente->listarPosUsuario($datos->id);
             
-            if($datos->puesto == $pendientes->sector)
+            if($pendientes)
             {
-                Pendientes::pendienteListo($id);
-                $payload = json_encode(array("mensaje" => 'El pendiente ha sido actualizado al estado de "listo"'));
-             
-            }else $payload = json_encode(array("mensaje" => 'Esta accion solo puede realizarla una persona correspondiente al sector del producto'));
+                $payload = json_encode(array("Mostrando la lista de tus pendientes" => $pendientes));
+
+            }else $payload = json_encode(array('mensaje'=>'No tienes pendientes asignados'));
+            
+
+        }
+        catch (Exception $e)
+        {
+            $payload = json_encode(array('mensaje' => $e->getMessage()));
+        }
+
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
+    
+    public function asignarPendienteEmpleado($request, $response, $args)
+    {
+        $params = $request->getParsedBody();
+
+        if(isset($params['idPendiente']) && isset($params['tiempoEstimado']))
+        {
+            $idPendiente = $params['idPendiente'];
+            $tiempEstimado = $params['tiempoEstimado'];
+            
+            $header = $request->getHeaderLine('Authorization');
+    
+            if ($header != null)
+            {
+                $token = trim(explode("Bearer", $header)[1]);
+                $datos = AutentificadorJWT::ObtenerData($token);
+
+            $pendiente = Pendientes::buscarId($idPendiente);
+
+            if(Producto::traerSector($pendiente->idProducto) == $datos->puesto)
+            {
+                if(Pendientes::pendienteNoAsignado($idPendiente))
+                {
+
+                    if(Pendientes::asignarPendiente($idPendiente,$datos->id,intval($tiempEstimado),$datos->puesto))
+                    {
+                        $pendienteModificado = Pendientes::buscarId($idPendiente);
+                        
+                        
+                        if(Pedido::asignarTiempoEstimado($pendienteModificado->id,$pendienteModificado->fechaEstimada))
+                        {
+                            $payload = json_encode(array('mensaje'=>'Pedido asignado con exito!'));
+        
+                        }else $payload = json_encode(array('mensaje'=>'Error al asignar el tiempo de entrega'));
+                        
+                        //$payload = json_encode(array('mensaje'=> Pedido::asignarTiempoEstimado($pendienteModificado->id,$pendienteModificado->fechaEstimada)));
+                        
+                    }else $payload = json_encode(array('mensaje'=>'Error al asignar el pendiente'));
+
+                }else $payload = json_encode(array('mensaje'=>'ERROR: Pendiente ya asignado'));
+
+            }else $payload = json_encode(array('mensaje'=>'ERROR: Este pendiente no corresponde a su sector',));
 
 
-           
 
-        }else  $payload = json_encode(array("mensaje" => 'No hemos encontrado el id del pendiente ingresado'));
+            }
+
+        }else $payload = json_encode(array('mensaje'=>'Verifique a los parametros'));
+
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
+
+    public function establecerPendienteListo($request, $response, $args)
+    {
+        $id = $args['idPendiente'];
+        $pendientes = Pendientes::buscarId($id);
+        if($pendientes)
+        {   
+            if($pendientes->estado != 'listo para servir')
+            {
+
+                $header = $request->getHeaderLine('Authorization');
+    
+                if ($header != null)
+                {
+                    $token = trim(explode("Bearer", $header)[1]);
+                    $datos = AutentificadorJWT::ObtenerData($token);
+    
+                }
+
+                if($datos->id == $pendientes->idEmpleado)
+                {
+                    if($datos->puesto == $pendientes->sector)
+                    {
+                        if(Pedido::establecerPedidoListoParaServir($pendientes->linkPendiente) && Pendientes::pendienteListo($id))
+                        {
+
+                            $payload = json_encode(array("mensaje" => 'El pendiente ha sido actualizado al estado de "listo para servir"'));
+
+                        }else $payload = json_encode(array("mensaje" => 'Error al actualizar el estado del pendiente/pedido'));
+                        
+
+                     
+                    }else $payload = json_encode(array("mensaje" => 'Esta accion solo puede realizarla una persona correspondiente al sector del producto'));
+                
+                }else $payload = json_encode(array("mensaje" => 'Esta accion solo puede hacerla el empleado a cargo del pendiente'));
+                
+            }else $payload = json_encode(array("mensaje" => 'El pedido ya fue establecido como listo para servir'));
+
+        }else  $payload = json_encode(array("mensaje" => 'No hemos encontrado el id del pendiente ingresado o el pedido'));
 
         $response->getBody()->write($payload);
         return $response->withHeader('Content-Type', 'application/json');
@@ -121,6 +219,9 @@ class ControllerPendientes extends Pendientes
 
         return $retorno;
     }
+
+
+    
 }
 
 ?>

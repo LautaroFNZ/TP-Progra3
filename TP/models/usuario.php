@@ -3,6 +3,7 @@
 
 
 class Usuario{
+    public $id;
     public $usuario;
     public $fechaString;
     public $puesto;
@@ -31,6 +32,16 @@ class Usuario{
     {
         $instancia = accesoDatos::instance();
         $command = $instancia->preparer("SELECT * FROM info_login");
+        $command->execute();
+
+        return $command->fetchAll(PDO::FETCH_CLASS, 'Usuario');
+    }
+
+    public static function traerRegistroUsuario($usuario)
+    {
+        $instancia = accesoDatos::instance();
+        $command = $instancia->preparer("SELECT * FROM info_login WHERE usuario = :usuario");
+        $command->bindValue(':usuario',strtolower($usuario),PDO::PARAM_STR);
         $command->execute();
 
         return $command->fetchAll(PDO::FETCH_CLASS, 'Usuario');

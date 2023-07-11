@@ -7,14 +7,16 @@ CREATE TABLE empleados (
 
 CREATE TABLE pedidos (
   id INT AUTO_INCREMENT PRIMARY KEY,
+  nroPedido varchar(200) not NULL,
+  linkPendiente varchar(100) NOT NULL,
   idMesa INT NOT NULL,
-  idProductos VARCHAR(200) NOT NULL,
+  idProducto VARCHAR(200) NOT NULL,
+  precio INT NOT NULL,
+  idUsuario int NOT NULL,
   estadoPedido varchar(50) NOT NULL,
-  precioTotal INT NOT NULL,
-  usuarioVenta varchar(100) NOT NULL,
   fechaEntrega varchar(100) NOT NULL,
   fechaEstimada varchar(100) NOT NULL
-);
+)
 
 CREATE TABLE mesa (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -32,10 +34,12 @@ CREATE TABLE productos{
 CREATE TABLE pendientes(
   id INT AUTO_INCREMENT PRIMARY KEY,
   idProducto INT NOT NULL,
-  nroPedido INT NOT NULL,
+  nroPedido varchar (100) NOT NULL,
+  linkPedido varchar(100) NOT NULL,
+  idEmpleado INT not null,
   sector varchar(100) NOT NULL,
   estado varchar(50) NOT NULL,
-  fechaEntregaPedido varchar(100) NOT NULL,
+  fechaEstimada varchar(100) NOT NULL,
   fechaEntregaReal varchar(100) NOT NULL  
 )
 
@@ -47,6 +51,7 @@ CREATE TABLE encuestas(
   puntajeCocinero INT not null,
   puntajePromedio float not null,
   nroPedido INT not null,
+  comentarios varchar(66) NOT NULL,
   nombreCliente varchar(100) not null
 )
 
@@ -55,11 +60,17 @@ CREATE TABLE facturas(
   precio float not null,
   nroPedido int not null,
   idMesa int not null,
-  nombreCliente varchar(100)
+  nombreCliente varchar(100) not null,
+  fecha varchar(100) not NULL
 )
 
 
 
 
 
-create table info_login (usuario varchar(50) not null, fechaString varchar(50) not null, puesto varchar(50) not null);
+create table info_login(
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  usuario varchar(50) not null,
+  fechaString varchar(50) not null,
+  puesto varchar(50) not null
+)

@@ -3,6 +3,7 @@
 include_once "./models/empleado.php";
 include_once "./interfaces/ApiInterface.php";
 
+
 class ControllerEmpleado extends Empleado
 {
     public function darDeAlta($request,$response,$args)
@@ -61,6 +62,8 @@ class ControllerEmpleado extends Empleado
        
         
     }
+
+    
    
 }
 
