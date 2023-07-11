@@ -197,7 +197,7 @@ class ControllerPedido extends Pedido
 
                 foreach($pedidos as $pedido)
                 {
-                    if($pedido->estadoPedido == 'cobrado')
+                    if($pedido->estadoPedido == 'entregado')
                     {
                         $precioTotal += $pedido->precio;
                         $contador++;
