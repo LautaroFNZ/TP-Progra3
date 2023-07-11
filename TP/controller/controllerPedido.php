@@ -162,7 +162,11 @@ class ControllerPedido extends Pedido
                     }
                 }
 
-                $payload = json_encode(array('mensaje'=>$tiempoEstimadoProductos));
+                if(count($tiempoEstimadoProductos)>0)
+                {
+                    $payload = json_encode(array('mensaje'=>$tiempoEstimadoProductos));
+
+                }else $payload = json_encode(array('mensaje'=>'Aun no hemos designado un tiempo estimado para sus pedidos'));
             
             }else $payload = json_encode(array('mensaje'=>'No hemos encontrado su pedido'));
 

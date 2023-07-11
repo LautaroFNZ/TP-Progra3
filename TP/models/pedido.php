@@ -140,7 +140,7 @@ class Pedido
         $instancia = accesoDatos::instance();
         $command = $instancia->preparer("UPDATE pedidos SET estadoPedido = 'listo para servir' WHERE linkPendiente = :linkPendiente");
 
-        $command->bindValue(':linkPendiente',$linkPendiente);
+        $command->bindValue(':linkPendiente',strtolower($linkPendiente));
         
         $filasAfectadas = $command->execute();
 

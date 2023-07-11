@@ -168,7 +168,7 @@ class ControllerPendientes extends Pendientes
                 {
                     if($datos->puesto == $pendientes->sector)
                     {
-                        if(Pedido::establecerPedidoListoParaServir($pendientes->linkPendiente) && Pendientes::pendienteListo($id))
+                        if(Pedido::establecerPedidoListoParaServir($pendientes->linkPedido) && Pendientes::pendienteListo($id))
                         {
 
                             $payload = json_encode(array("mensaje" => 'El pendiente ha sido actualizado al estado de "listo para servir"'));

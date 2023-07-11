@@ -1039,7 +1039,7 @@
 					"response": []
 				},
 				{
-					"name": "New Request",
+					"name": "productosMasVendidos",
 					"request": {
 						"method": "GET",
 						"header": []
@@ -1124,7 +1124,7 @@
 					"formdata": [
 						{
 							"key": "usuario",
-							"value": "admin",
+							"value": "birra",
 							"type": "text"
 						},
 						{

@@ -114,9 +114,9 @@ class Pendientes
 
         $command->bindValue(':id',$id);
         $command->bindValue(':fechaReal',date('d-m-y H:i:s'));
-        $command->execute();
+        $filasAfectadas = $command->execute();
 
-        return $command->fetchObject('Pendientes'); 
+        return $filasAfectadas > 0;
     }
 
 
